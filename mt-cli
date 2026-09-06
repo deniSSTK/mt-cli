@@ -47,13 +47,13 @@ mt() {
         read raw_path
         echo -n "enter name: "
         read name
-        mt-cli add "$name" "$raw_path"
+        command mt add "$name" "$raw_path"
     elif [ "$1" = "list" ] || [ "$1" = "delete" ]; then
-        mt-cli "$@"
+        command mt "$@"
     elif [ -z "$1" ]; then
         echo "Usage: mt [new|list|delete|<name>]"
     else
-        local target_path=$(mt-cli get "$1")
+        local target_path=$(command mt get "$1")
         if [ -n "$target_path" ]; then
             if [ -d "$target_path" ]; then
                 cd "$target_path"

@@ -1,0 +1,70 @@
+#!/bin/sh
+
+CONFIG_FILE="$HOME/.mt_routes"
+touch "$CONFIG_FILE"
+
+case "$1" in
+    add)
+        name="$2"
+        raw_path="$3"
+
+        case "$raw_path" in
+            /*)   full_path="$raw_path" ;;
+            "~"*) full_path="$HOME${raw_path#\~}" ;;
+            *)    full_path="$HOME/$raw_path" ;;
+        esac
+
+        grep -v "^${name}|" "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" 2>/dev/null
+        mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+        echo "${name}|${full_path}" >> "$CONFIG_FILE"
+        echo "Saved"
+        ;;
+
+    list)
+        if [ ! -s "$CONFIG_FILE" ]; then
+            echo "Empty"
+        else
+            awk -F'|' '{printf "%s - %s\n", $1, $2}' "$CONFIG_FILE"
+        fi
+        ;;
+
+    delete)
+        name="$2"
+        grep -v "^${name}|" "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" 2>/dev/null
+        mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+        echo "Deleted"
+        ;;
+
+    get)
+        grep "^$2|" "$CONFIG_FILE" | cut -d'|' -f2-
+        ;;
+
+    init)
+        cat << 'EOF'
+mt() {
+    if [ "$1" = "new" ]; then
+        echo -n "enter path: "
+        read raw_path
+        echo -n "enter name: "
+        read name
+        mt-cli add "$name" "$raw_path"
+    elif [ "$1" = "list" ] || [ "$1" = "delete" ]; then
+        mt-cli "$@"
+    elif [ -z "$1" ]; then
+        echo "Usage: mt [new|list|delete|<name>]"
+    else
+        local target_path=$(mt-cli get "$1")
+        if [ -n "$target_path" ]; then
+            if [ -d "$target_path" ]; then
+                cd "$target_path"
+            else
+                echo "Error: directory '$target_path' does not exist."
+            fi
+        else
+            echo "Error: name '$1' not found."
+        fi
+    fi
+}
+EOF
+        ;;
+esac

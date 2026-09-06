@@ -3,10 +3,29 @@
 CONFIG_FILE="$HOME/.mt_routes"
 touch "$CONFIG_FILE"
 
+RESERVED_NAMES="new list delete add get init"
+
+is_reserved() {
+    case " $RESERVED_NAMES " in
+        *" $1 "*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 case "$1" in
     add)
         name="$2"
         raw_path="$3"
+
+        if [ -z "$name" ] || [ -z "$raw_path" ]; then
+            echo "Error: name and path are required."
+            exit 1
+        fi
+
+        if is_reserved "$name"; then
+            echo "Error: '$name' is a reserved command name."
+            exit 1
+        fi
 
         case "$raw_path" in
             /*)   full_path="$raw_path" ;;
@@ -43,10 +62,19 @@ case "$1" in
         cat << 'EOF'
 mt() {
     if [ "$1" = "new" ]; then
-        echo -n "enter path: "
-        read raw_path
-        echo -n "enter name: "
-        read name
+        local name="$2"
+        local raw_path="$3"
+
+        if [ -z "$name" ]; then
+            echo -n "enter name: "
+            read name
+        fi
+
+        if [ -z "$raw_path" ]; then
+            echo -n "enter path: "
+            read raw_path
+        fi
+
         command mt add "$name" "$raw_path"
     elif [ "$1" = "list" ] || [ "$1" = "delete" ]; then
         command mt "$@"

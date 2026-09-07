@@ -12,8 +12,6 @@ is_reserved() {
     esac
 }
 
-
-# TODO alias | rename
 case "$1" in
     add)
         name="$2"
